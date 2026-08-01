@@ -13,6 +13,7 @@ sealed class TripEvaluation {
     object ParsingError : TripEvaluation()
     data class Evaluated(
         val status: SemaphoreStatus,
+        val totalDistanceKm: Double,
         val pricePerKm: Double,
         val passesKm: Boolean,
         val earningsPerHour: Double,

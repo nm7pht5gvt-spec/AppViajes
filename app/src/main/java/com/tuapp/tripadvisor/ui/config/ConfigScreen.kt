@@ -1,6 +1,8 @@
 package com.tuapp.tripadvisor.ui.config
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -8,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -64,75 +67,122 @@ fun ConfigScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(Color(0xFF121212))
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Text("Configura tus tarifas", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text(
-            text = "El semáforo usará estos valores como referencia mínima.",
+            text = "DriverIQ",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF00B4D8)
+        )
+        Text(
+            text = "Configuración de Tarifas Mínimas",
             fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp, bottom = 32.dp)
+            color = Color.Gray,
+            modifier = Modifier.padding(top = 4.dp, bottom = 28.dp)
         )
 
-        OutlinedTextField(
-            value = state.pricePerKmInput,
-            onValueChange = { viewModel.onPricePerKmChanged(it) },
-            label = { Text("Precio mínimo por km ($)") },
-            placeholder = { Text("Ej: 1.50") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
 
-        Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Límites por Kilómetro",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
 
-        OutlinedTextField(
-            value = state.earningsPerHourInput,
-            onValueChange = { viewModel.onEarningsPerHourChanged(it) },
-            label = { Text("Ganancia mínima por hora ($)") },
-            placeholder = { Text("Ej: 25.00") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = state.pricePerKmInput,
+                    onValueChange = { viewModel.onPricePerKmChanged(it) },
+                    label = { Text("Precio mínimo por KM ($)") },
+                    placeholder = { Text("Ej: 8.00") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = "Límites por Hora",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = state.earningsPerHourInput,
+                    onValueChange = { viewModel.onEarningsPerHourChanged(it) },
+                    label = { Text("Ganancia mínima por hora ($)") },
+                    placeholder = { Text("Ej: 200.00") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
 
         state.errorMessage?.let { errorMsg ->
             Text(
                 text = errorMsg,
                 color = MaterialTheme.colorScheme.error,
                 fontSize = 13.sp,
-                modifier = Modifier.padding(top = 12.dp)
+                modifier = Modifier.padding(top = 16.dp)
             )
         }
 
         if (state.saveSuccess) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 12.dp)) {
-                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Preferencias guardadas — Servicio activo", fontSize = 13.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
+                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF00C853))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Tarifas guardadas — Servicio Activo", fontSize = 14.sp, color = Color.White)
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         Button(
             onClick = { attemptActivation() },
             enabled = !state.isSaving,
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00B4D8)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp)
         ) {
             if (state.isSaving) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(20.dp),
                     strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = Color.White
                 )
             } else {
-                Text("Guardar y Activar Servicio", fontSize = 16.sp)
+                Text(
+                    "Guardar y Activar DriverIQ",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
             }
         }
+        
+        Spacer(modifier = Modifier.height(12.dp))
     }
 
     if (showOverlayDialog) {
@@ -157,4 +207,3 @@ fun ConfigScreen(
         )
     }
 }
-

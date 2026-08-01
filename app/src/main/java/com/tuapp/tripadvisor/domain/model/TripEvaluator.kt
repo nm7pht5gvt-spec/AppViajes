@@ -14,18 +14,17 @@ class TripEvaluator {
         val passesKm = pricePerKm >= prefs.minPricePerKm
         val passesHour = earningsPerHour >= prefs.minEarningsPerHour
 
-        // Semáforo: Verde si ambos cumplen, Naranja si sólo uno, Rojo si ninguno
         val status = when {
             passesKm && passesHour -> SemaphoreStatus.GREEN
             passesKm || passesHour -> SemaphoreStatus.YELLOW
             else -> SemaphoreStatus.RED
         }
 
-        // Análisis básico de zona según palabras clave
         val zoneRisk = evaluateZone(destinationText)
 
         return TripEvaluation.Evaluated(
             status = status,
+            totalDistanceKm = offer.distanceKm,
             pricePerKm = pricePerKm,
             passesKm = passesKm,
             earningsPerHour = earningsPerHour,

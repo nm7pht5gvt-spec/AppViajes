@@ -38,12 +38,11 @@ fun SemaphoreWidget(
 
     Box(
         modifier = modifier
-            .width(220.dp)
+            .width(230.dp)
             .background(backgroundColor, RoundedCornerShape(16.dp))
             .padding(14.dp)
     ) {
         Column {
-            // Cabecera con botón de cerrar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -52,7 +51,7 @@ fun SemaphoreWidget(
                 Text(
                     text = "DriverIQ",
                     color = Color.White,
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
                 IconButton(
@@ -67,18 +66,28 @@ fun SemaphoreWidget(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             when (evaluation) {
                 is TripEvaluation.Evaluated -> {
-                    // 1. Pago por Km
+                    // Distancia Total Sumada
+                    Text(
+                        text = "Distancia total: ${"%.1f".format(evaluation.totalDistanceKm)} km",
+                        color = Color(0xFFE0E0E0),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // 1. $/KM exacto
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "$/KM: $${"%.1f".format(evaluation.pricePerKm)}",
+                            text = "$/KM: $${"%.2f".format(evaluation.pricePerKm)}",
                             color = Color.White,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold
@@ -91,16 +100,16 @@ fun SemaphoreWidget(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                    // 2. Pago por Hora
+                    // 2. $/Hora exacto
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "$/Hora: $${"%.1f".format(evaluation.earningsPerHour)}",
+                            text = "$/Hora: $${"%.2f".format(evaluation.earningsPerHour)}",
                             color = Color.White,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold
@@ -115,7 +124,7 @@ fun SemaphoreWidget(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // 3. Evaluación de Zona
+                    // 3. Zona
                     val (zoneText, zoneColor) = when (evaluation.zoneRisk) {
                         ZoneRisk.SAFE -> "Segura" to Color(0xFF69F0AE)
                         ZoneRisk.NORMAL -> "Normal" to Color(0xFFFFD700)
@@ -126,25 +135,17 @@ fun SemaphoreWidget(
                     Text(
                         text = "Zona: $zoneText",
                         color = zoneColor,
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
                 TripEvaluation.Idle -> {
-                    Text(
-                        text = "Esperando viaje...",
-                        color = Color.LightGray,
-                        fontSize = 13.sp
-                    )
+                    Text(text = "Esperando viaje...", color = Color.LightGray, fontSize = 13.sp)
                 }
 
                 TripEvaluation.ParsingError -> {
-                    Text(
-                        text = "Error al leer datos",
-                        color = Color(0xFFFF5252),
-                        fontSize = 13.sp
-                    )
+                    Text(text = "Error al leer datos", color = Color(0xFFFF5252), fontSize = 13.sp)
                 }
             }
         }
