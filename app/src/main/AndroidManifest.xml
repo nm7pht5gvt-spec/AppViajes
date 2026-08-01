@@ -42,12 +42,3 @@
     </application>
 
 </manifest>
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <service
-            android:name=".service.accessibility.RideAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-      
