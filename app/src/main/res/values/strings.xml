@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Semáforo de Viajes</string>
+    <string name="app_name">DriverIQ</string>
     <string name="accessibility_service_description">Servicio para monitorear viajes de Uber</string>
 </resources>
