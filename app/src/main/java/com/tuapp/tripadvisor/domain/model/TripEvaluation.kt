@@ -10,6 +10,7 @@ enum class ZoneRisk {
 
 sealed class TripEvaluation {
     object Idle : TripEvaluation()
+    object InTrip : TripEvaluation()
     object ParsingError : TripEvaluation()
     data class Evaluated(
         val status: SemaphoreStatus,

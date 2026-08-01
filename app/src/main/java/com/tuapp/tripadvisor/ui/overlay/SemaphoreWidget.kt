@@ -28,11 +28,12 @@ fun SemaphoreWidget(
 ) {
     val backgroundColor = when (evaluation) {
         is TripEvaluation.Evaluated -> when (evaluation.status) {
-            SemaphoreStatus.GREEN -> Color(0xFF1B5E20)  // Verde
-            SemaphoreStatus.YELLOW -> Color(0xFFE65100) // Naranja
-            SemaphoreStatus.RED -> Color(0xFFB71C1C)    // Rojo
+            SemaphoreStatus.GREEN -> Color(0xFF1B5E20)
+            SemaphoreStatus.YELLOW -> Color(0xFFE65100)
+            SemaphoreStatus.RED -> Color(0xFFB71C1C)
             SemaphoreStatus.GREY -> Color(0xFF212121)
         }
+        TripEvaluation.InTrip -> Color(0xFF0D47A1) // Azul obscuro elegante para "En viaje"
         else -> Color(0xFF212121)
     }
 
@@ -70,7 +71,6 @@ fun SemaphoreWidget(
 
             when (evaluation) {
                 is TripEvaluation.Evaluated -> {
-                    // Distancia Total Sumada
                     Text(
                         text = "Distancia total: ${"%.1f".format(evaluation.totalDistanceKm)} km",
                         color = Color(0xFFE0E0E0),
@@ -80,7 +80,6 @@ fun SemaphoreWidget(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // 1. $/KM exacto
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -102,7 +101,6 @@ fun SemaphoreWidget(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // 2. $/Hora exacto
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -124,7 +122,6 @@ fun SemaphoreWidget(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // 3. Zona
                     val (zoneText, zoneColor) = when (evaluation.zoneRisk) {
                         ZoneRisk.SAFE -> "Segura" to Color(0xFF69F0AE)
                         ZoneRisk.NORMAL -> "Normal" to Color(0xFFFFD700)
@@ -136,6 +133,15 @@ fun SemaphoreWidget(
                         text = "Zona: $zoneText",
                         color = zoneColor,
                         fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                TripEvaluation.InTrip -> {
+                    Text(
+                        text = "🚗 En viaje",
+                        color = Color.White,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }

@@ -1,5 +1,9 @@
 package com.tuapp.tripadvisor.service.overlay
 
+import android.annotation.SuppressLint
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -7,19 +11,13 @@ import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
+import android.view.MotionEvent
+import android.view.View
 import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.lifecycle.setViewTreeViewModelStoreOwner
-import androidx.savedstate.SavedStateRegistry
-import androidx.savedstate.SavedStateRegistryController
-import androidx.savedstate.SavedStateRegistryOwner
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import androidx.core.app.NotificationCompat
+import androidx.lifecycle.*
+import androidx.savedstate.*
 import com.tuapp.tripadvisor.domain.model.TripEvaluation
 import com.tuapp.tripadvisor.ui.overlay.SemaphoreWidget
 
@@ -35,6 +33,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
 
     private var windowManager: WindowManager? = null
     private var composeView: ComposeView? = null
+    private var params: WindowManager.LayoutParams? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -44,12 +43,36 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
 
+        startInForeground()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         setupOverlayView()
     }
 
+    private fun startInForeground() {
+        val channelId = "driveriq_overlay_channel"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "DriverIQ Servicio Activo",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
+        }
+
+        val notification: Notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("DriverIQ Activo")
+            .setContentText("Monitoreando Uber, DiDi e InDrive...")
+            .setSmallIcon(android.R.drawable.ic_menu_compass)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        startForeground(1001, notification)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
     private fun setupOverlayView() {
-        val params = WindowManager.LayoutParams(
+        params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -77,6 +100,32 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
             }
         }
 
+        // Listener para arrastrar la ventana flotante libremente por toda la pantalla
+        var initialX = 0
+        var initialY = 0
+        var initialTouchX = 0f
+        var initialTouchY = 0f
+
+        composeView?.setOnTouchListener { _, event ->
+            val p = params ?: return@setOnTouchListener false
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = p.x
+                    initialY = p.y
+                    initialTouchX = event.rawX
+                    initialTouchY = event.rawY
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    p.x = initialX + (event.rawX - initialTouchX).toInt()
+                    p.y = initialY + (event.rawY - initialTouchY).toInt()
+                    windowManager?.updateViewLayout(composeView, p)
+                    true
+                }
+                else -> false
+            }
+        }
+
         windowManager?.addView(composeView, params)
     }
 
@@ -95,10 +144,8 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         store.clear()
-        
-        composeView?.let {
-            windowManager?.removeView(it)
-        }
+
+        composeView?.let { windowManager?.removeView(it) }
         super.onDestroy()
     }
 
@@ -110,7 +157,11 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
 
         fun start(context: Context) {
             val intent = Intent(context, OverlayService::class.java)
-            context.startService(intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         }
 
         fun updateEvaluation(context: Context, evaluation: TripEvaluation) {
