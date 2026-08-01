@@ -3,7 +3,7 @@ package com.tuapp.tripadvisor.domain.model
 import com.tuapp.tripadvisor.data.preferences.UserPreferences
 
 class TripEvaluator {
-    fun evaluate(offer: TripOffer, prefs: UserPreferences): TripEvaluation {
+    fun evaluate(offer: TripOffer, prefs: UserPreferences, destinationText: String = ""): TripEvaluation {
         if (offer.distanceKm <= 0.0 || offer.durationMinutes <= 0.0) {
             return TripEvaluation.ParsingError
         }
@@ -14,16 +14,36 @@ class TripEvaluator {
         val passesKm = pricePerKm >= prefs.minPricePerKm
         val passesHour = earningsPerHour >= prefs.minEarningsPerHour
 
+        // Semáforo: Verde si ambos cumplen, Naranja si sólo uno, Rojo si ninguno
         val status = when {
             passesKm && passesHour -> SemaphoreStatus.GREEN
             passesKm || passesHour -> SemaphoreStatus.YELLOW
             else -> SemaphoreStatus.RED
         }
 
+        // Análisis básico de zona según palabras clave
+        val zoneRisk = evaluateZone(destinationText)
+
         return TripEvaluation.Evaluated(
             status = status,
             pricePerKm = pricePerKm,
-            earningsPerHour = earningsPerHour
+            passesKm = passesKm,
+            earningsPerHour = earningsPerHour,
+            passesHour = passesHour,
+            zoneRisk = zoneRisk,
+            zoneName = if (destinationText.isBlank()) "Normal" else destinationText
         )
+    }
+
+    private fun evaluateZone(text: String): ZoneRisk {
+        val lower = text.lowercase()
+        val riskKeywords = listOf("tepito", "doctores", "iztapalapa", "ecatepec", "lagunilla", "renacimiento")
+        val safeKeywords = listOf("polanco", "roma", "condesa", "del valle", "santa fe", "aeropuerto")
+
+        return when {
+            riskKeywords.any { lower.contains(it) } -> ZoneRisk.RISK
+            safeKeywords.any { lower.contains(it) } -> ZoneRisk.SAFE
+            else -> ZoneRisk.NORMAL
+        }
     }
 }
