@@ -38,6 +38,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         savedStateRegistryController.performRestore(null)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
@@ -64,14 +65,13 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         }
 
         composeView = ComposeView(this).apply {
-            // Usamos las extensiones directas de Kotlin
             setViewTreeLifecycleOwner(this@OverlayService)
             setViewTreeViewModelStoreOwner(this@OverlayService)
             setViewTreeSavedStateRegistryOwner(this@OverlayService)
 
             setContent {
                 SemaphoreWidget(
-                    evaluation = TripEvaluation.Idle,
+                    evaluation = currentEvaluation,
                     onClose = { stopSelf() }
                 )
             }
@@ -80,7 +80,17 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         windowManager?.addView(composeView, params)
     }
 
+    fun refreshUI() {
+        composeView?.setContent {
+            SemaphoreWidget(
+                evaluation = currentEvaluation,
+                onClose = { stopSelf() }
+            )
+        }
+    }
+
     override fun onDestroy() {
+        instance = null
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
@@ -95,9 +105,17 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        private var currentEvaluation: TripEvaluation = TripEvaluation.Idle
+        private var instance: OverlayService? = null
+
         fun start(context: Context) {
             val intent = Intent(context, OverlayService::class.java)
             context.startService(intent)
+        }
+
+        fun updateEvaluation(context: Context, evaluation: TripEvaluation) {
+            currentEvaluation = evaluation
+            instance?.refreshUI()
         }
     }
 }
