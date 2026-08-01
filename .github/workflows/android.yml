@@ -1,0 +1,38 @@
+name: Android CI Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Generar Gradle Wrapper
+        run: gradle wrapper --gradle-version 8.7
+
+      - name: Otorgar permisos al wrapper
+        run: chmod +x gradlew
+
+      - name: Compilar APK Debug
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Subir APK como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
