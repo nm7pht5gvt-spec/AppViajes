@@ -21,16 +21,18 @@ class RideAccessibilityService : AccessibilityService() {
         val rootNode = rootInActiveWindow ?: return
 
         val screenTextBuilder = StringBuilder()
-        collectText(rootNode, screenTextBuilder)
+        collectAllText(rootNode, screenTextBuilder)
         val textToParse = screenTextBuilder.toString()
 
-        // 1. Detectar si el usuario ya está en viaje
+        if (textToParse.isBlank()) return
+
+        // 1. Verificar si está en viaje
         if (ScreenTextParser.isCurrentlyInTrip(textToParse)) {
             OverlayService.updateEvaluation(applicationContext, TripEvaluation.InTrip)
             return
         }
 
-        // 2. Intentar parsear oferta de viaje (Uber, DiDi, InDrive)
+        // 2. Intentar parsear oferta de viaje (DiDi / Uber / InDrive)
         val offer = ScreenTextParser.parse(textToParse)
         if (offer != null) {
             CoroutineScope(Dispatchers.IO).launch {
@@ -39,19 +41,23 @@ class RideAccessibilityService : AccessibilityService() {
                 val evaluation = evaluator.evaluate(offer, prefs, textToParse)
                 OverlayService.updateEvaluation(applicationContext, evaluation)
             }
-        } else {
-            // Si la oferta fue aceptada/rechazada y desaparece de la pantalla, reiniciar a Idle
-            OverlayService.updateEvaluation(applicationContext, TripEvaluation.Idle)
         }
     }
 
-    private fun collectText(node: AccessibilityNodeInfo?, builder: StringBuilder) {
+    private fun collectAllText(node: AccessibilityNodeInfo?, builder: StringBuilder) {
         if (node == null) return
+
+        // Extraer texto principal
         if (!node.text.isNullOrEmpty()) {
             builder.append(node.text).append(" ")
         }
+        // Extraer descripción accesible (DiDi usa mucho esta propiedad en sus iconos e importes)
+        if (!node.contentDescription.isNullOrEmpty()) {
+            builder.append(node.contentDescription).append(" ")
+        }
+
         for (i in 0 until node.childCount) {
-            collectText(node.getChild(i), builder)
+            collectAllText(node.getChild(i), builder)
         }
     }
 
