@@ -12,12 +12,12 @@ import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
 import android.view.MotionEvent
-import android.view.View
 import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.*
 import androidx.savedstate.*
+import com.tuapp.tripadvisor.R
 import com.tuapp.tripadvisor.domain.model.TripEvaluation
 import com.tuapp.tripadvisor.ui.overlay.SemaphoreWidget
 
@@ -43,7 +43,12 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
 
-        startInForeground()
+        try {
+            startInForeground()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         setupOverlayView()
     }
@@ -62,8 +67,8 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("DriverIQ Activo")
-            .setContentText("Monitoreando Uber, DiDi e InDrive...")
-            .setSmallIcon(android.R.drawable.ic_menu_compass)
+            .setContentText("Monitoreando viajes en tiempo real...")
+            .setSmallIcon(R.drawable.ic_app_logo)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
@@ -100,7 +105,6 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
             }
         }
 
-        // Listener para arrastrar la ventana flotante libremente por toda la pantalla
         var initialX = 0
         var initialY = 0
         var initialTouchX = 0f
@@ -126,7 +130,11 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
             }
         }
 
-        windowManager?.addView(composeView, params)
+        try {
+            windowManager?.addView(composeView, params)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun refreshUI() {
@@ -145,7 +153,13 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         store.clear()
 
-        composeView?.let { windowManager?.removeView(it) }
+        composeView?.let {
+            try {
+                windowManager?.removeView(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
         super.onDestroy()
     }
 
@@ -157,10 +171,14 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
 
         fun start(context: Context) {
             val intent = Intent(context, OverlayService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
 
