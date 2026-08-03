@@ -18,21 +18,21 @@ class RideAccessibilityService : AccessibilityService() {
     private val evaluator = TripEvaluator()
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        val rootNode = rootInActiveWindow ?: return
+        val rootNode = rootInActiveWindow ?: event?.source ?: return
 
         val screenTextBuilder = StringBuilder()
-        collectAllText(rootNode, screenTextBuilder)
+        collectDeepText(rootNode, screenTextBuilder)
         val textToParse = screenTextBuilder.toString()
 
         if (textToParse.isBlank()) return
 
-        // 1. Verificar si está en viaje
+        // 1. Verificar si el conductor ya va en viaje
         if (ScreenTextParser.isCurrentlyInTrip(textToParse)) {
             OverlayService.updateEvaluation(applicationContext, TripEvaluation.InTrip)
             return
         }
 
-        // 2. Intentar parsear oferta de viaje (DiDi / Uber / InDrive)
+        // 2. Analizar oferta (DiDi / Uber / InDrive / Centro de Viajes)
         val offer = ScreenTextParser.parse(textToParse)
         if (offer != null) {
             CoroutineScope(Dispatchers.IO).launch {
@@ -44,20 +44,28 @@ class RideAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun collectAllText(node: AccessibilityNodeInfo?, builder: StringBuilder) {
+    private fun collectDeepText(node: AccessibilityNodeInfo?, builder: StringBuilder) {
         if (node == null) return
 
-        // Extraer texto principal
+        // Textos normales
         if (!node.text.isNullOrEmpty()) {
             builder.append(node.text).append(" ")
         }
-        // Extraer descripción accesible (DiDi usa mucho esta propiedad en sus iconos e importes)
+        // Descripciones para lectores de pantalla (DiDi usa esto en montos y distancias)
         if (!node.contentDescription.isNullOrEmpty()) {
             builder.append(node.contentDescription).append(" ")
         }
+        // Hint text en campos de formulario
+        if (!node.hintText.isNullOrEmpty()) {
+            builder.append(node.hintText).append(" ")
+        }
 
         for (i in 0 until node.childCount) {
-            collectAllText(node.getChild(i), builder)
+            val child = node.getChild(i)
+            if (child != null) {
+                collectDeepText(child, builder)
+                child.recycle()
+            }
         }
     }
 

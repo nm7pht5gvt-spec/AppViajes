@@ -18,7 +18,7 @@ object ScreenTextParser {
         if (text.isBlank()) return null
         val cleanText = text.replace("\n", " ").replace(",", ".")
 
-        // 1. Precios ($44.89, MXN44.89, $ 44.89)
+        // 1. PRECIO PRINCIPAL ($44.89, MXN44.89, $ 44.89)
         val priceRegex = """(?:\$|MXN\s*)\s*(\d+(?:\.\d+)?)""".toRegex(RegexOption.IGNORE_CASE)
         val priceMatches = priceRegex.findAll(cleanText).mapNotNull { 
             it.groupValues[1].toDoubleOrNull() 
@@ -26,9 +26,10 @@ object ScreenTextParser {
 
         val earnings = priceMatches.maxOrNull() ?: return null
 
-        // 2. Distancias en KM y M (DiDi)
+        // 2. DISTANCIAS TOTALES (KM + METROS DE DIDI)
         var totalDistanceKm = 0.0
 
+        // A) Buscar Kilómetros (3.2 km, 3.2km)
         val kmRegex = """(\d+(?:\.\d+)?)\s*km""".toRegex(RegexOption.IGNORE_CASE)
         val kmMatches = kmRegex.findAll(cleanText).mapNotNull { match ->
             val value = match.groupValues[1].toDoubleOrNull()
@@ -39,18 +40,20 @@ object ScreenTextParser {
             totalDistanceKm += kmMatches.take(2).sum()
         }
 
+        // B) Buscar Metros (892 m, 882m, 892m) -> Convertir a KM
         val mRegex = """(\d+)\s*m\b""".toRegex(RegexOption.IGNORE_CASE)
         val mMatches = mRegex.findAll(cleanText).mapNotNull { match ->
             val value = match.groupValues[1].toDoubleOrNull()
+            // Evitar confundir con la palabra "min"
             if (value != null && !match.value.contains("min", true)) value else null
         }.toList()
 
         if (mMatches.isNotEmpty()) {
-            val metersInKm = mMatches.take(2).sum() / 1000.0
-            totalDistanceKm += metersInKm
+            val metersConvertedToKm = mMatches.take(2).sum() / 1000.0
+            totalDistanceKm += metersConvertedToKm
         }
 
-        // 3. Tiempos (minutos)
+        // 3. TIEMPOS TOTALES (MINUTOS)
         var totalMinutes = 0.0
         val hoursRegex = """(\d+)\s*h""".toRegex(RegexOption.IGNORE_CASE)
         val minsRegex = """(\d+)\s*min""".toRegex(RegexOption.IGNORE_CASE)
